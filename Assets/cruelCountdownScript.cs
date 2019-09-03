@@ -1,4 +1,5 @@
 using System;
+using System.Text.RegularExpressions;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -387,6 +388,14 @@ public class cruelCountdownScript : MonoBehaviour
         }
         else if(selectedOperation == "÷")
         {
+            // Note from K.S.: Don't attempt to divide by zero, TP will catch the DivideByZeroException and autosolve us
+            if(secondPress.chosenNumber == 0)
+            {
+                Debug.LogFormat("[Countdown #{0}] Strike! You can't divide by zero.", moduleId);
+                GetComponent<KMBombModule>().HandleStrike();
+                Reset();
+                return;
+            }
             if(firstPress.chosenNumber % secondPress.chosenNumber != 0 || firstPress.chosenNumber / secondPress.chosenNumber <= 0)
             {
                 Debug.LogFormat("[Cruel Countdown #{0}] Strike! {1} ÷ {2} would yield a non-integer.", moduleId, firstPress.chosenNumber, secondPress.chosenNumber);
@@ -461,6 +470,146 @@ public class cruelCountdownScript : MonoBehaviour
         foreach(KMSelectable op in operators)
         {
             op.GetComponentInChildren<TextMesh>().color = textColours[0];
+        }
+    }
+
+
+    // Twitch Plays implementation handled by Kaito Sinclaire (K_S_)
+#pragma warning disable 414
+    private readonly string TwitchHelpMessage = @"Use '!{0} activate' or '!{0} go' to start the clock, then '!{0} 2 * 8', '!{0} 25 / 5', etc. Commands are chainable using semicolons.";
+#pragma warning restore 414
+
+    public IEnumerator ProcessTwitchCommand(string command)
+    {
+        Match mt;
+        String errorStr;
+        List<string> cmds = command.Split(';').ToList();
+        bool anyCommandValid = false;
+
+        foreach (string cmd in cmds)
+        {
+            if (Regex.IsMatch(cmd, @"^\s*(?:press|select)?\s*(?:activate|go|start|clock)\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+            {
+                yield return null;
+
+                // If the clock's already been pressed, just ignore it.
+                // Don't consider it an error, just move along.
+                if (clockOn)
+                    continue;
+
+                Debug.LogFormat("[Cruel Countdown #{0}] TP Command: Your next line is... \"Here's the countdown clock...\"", moduleId);
+
+                // If time runs out, the person who starts the clock first gets the strike.
+                yield return "strike";
+                yield return new KMSelectable[] { clock };
+            }
+            else if ((mt = Regex.Match(cmd, @"^\s*(?:press|select)?\s*(\d{1,4})\s*([+\-*×x/÷])\s*(\d{1,4})\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)).Success)
+            {
+                // Match group 1: First number
+                // Match group 2: Operator
+                // Match group 3: Second number
+                int numberA = Convert.ToInt32(mt.Groups[1].ToString());
+                int numberB = Convert.ToInt32(mt.Groups[3].ToString());
+                string operatorTx = mt.Groups[2].ToString();
+                KMSelectable numberSelA = null, numberSelB = null, operSel = null;
+
+                if (!clockOn)
+                {
+                    yield return "sendtochaterror The clock hasn't been started! You need to do that first.";
+                    yield break;
+                }
+
+                foreach(ClickableNumbers number in numbers)
+                {
+                    if (number.position != 10 && number.chosenNumber == numberA)
+                    {
+                        numberSelA = number.selectable;
+                        break;
+                    }
+                }
+                if (numberSelA == null)
+                {
+                    errorStr = String.Format("sendtochaterror I couldn't find a {1} to use for '{0}'. Stopped at that point.",
+                        cmd, numberA);
+                    yield return errorStr;
+                    yield break;
+                }
+
+                foreach(ClickableNumbers number in numbers)
+                {
+                    // Obviously we can't pick the same selectable again.
+                    if (number.selectable != numberSelA && number.position != 10 && number.chosenNumber == numberB)
+                    {
+                        numberSelB = number.selectable;
+                        break;
+                    }
+                }
+                if (numberSelB == null)
+                {
+                    errorStr = String.Format("sendtochaterror I couldn't find a {2}{1} to use for '{0}'. Stopped at that point.",
+                        cmd, numberB, (numberA == numberB) ? "second " : "");
+                    yield return errorStr;
+                    yield break;
+                }
+
+                if (operatorTx.Equals("+"))
+                {
+                    Debug.LogFormat("[Cruel Countdown #{0}] TP Command: {1} plus {2}", moduleId, numberA, numberB);
+                    operSel = operators[0];
+                }
+                else if (operatorTx.Equals("-"))
+                {
+                    Debug.LogFormat("[Cruel Countdown #{0}] TP Command: {1} minus {2}", moduleId, numberA, numberB);
+                    operSel = operators[1];
+                }
+                else if (operatorTx.Equals("/") || operatorTx.Equals("÷"))
+                {
+                    Debug.LogFormat("[Cruel Countdown #{0}] TP Command: {1} divided by {2}", moduleId, numberA, numberB);
+                    operSel = operators[3];
+                }
+                else // X, x, *, ×
+                {
+                    Debug.LogFormat("[Cruel Countdown #{0}] TP Command: {1} times {2}", moduleId, numberA, numberB);
+                    operSel = operators[2];
+                }
+
+                yield return null;
+                yield return new KMSelectable[] { numberSelA, operSel, numberSelB };
+            }
+            else
+            {
+                if (anyCommandValid)
+                {
+                    errorStr = String.Format("sendtochaterror I don't recognize '{0}'. Stopped at that point.", cmd);
+                    yield return errorStr;
+                }
+                yield break;
+            }
+            anyCommandValid = true;
+            yield return new WaitForSeconds(0.25f);
+        }
+        yield break;
+    }
+
+    void TwitchHandleForcedSolve()
+    {
+        GetComponent<KMBombModule>().HandlePass();
+        moduleSolved = true;
+        Debug.LogFormat("[Countdown #{0}] Twitch Plays requested a solve.", moduleId);
+        if (clockOn)
+        {
+            // Act like we've just been solved the normal way
+            clockAnimation.enabled = false;
+            foreach(KMSelectable op in operators)
+                op.GetComponentInChildren<TextMesh>().color = textColours[0];
+            for(int i = 0; i <= 5; i++)
+            {
+                numbers[i].numberText.text = selectedNumbers[i].ToString();
+                numbers[i].numberText.color = textColours[0];
+            }
+
+            clockSFX.Stop();
+            Audio.PlaySoundAtTransform("bell", transform);
         }
     }
 }
