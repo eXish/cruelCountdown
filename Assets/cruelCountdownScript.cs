@@ -24,7 +24,7 @@ public class cruelCountdownScript : MonoBehaviour
     private List<int> selectedLarge = new List<int>();
 
     public TextMesh targetText;
-    private int target;
+    private int target = 1; //just in case, not 0 because it would auto-solve
     private int chosenEquation = 0;
 
     private ClickableNumbers firstPress;
@@ -39,6 +39,7 @@ public class cruelCountdownScript : MonoBehaviour
     private int equationsDone = 0;
     private int boardFirst = 0;
     private int mostRecentSolve = 0;
+    private bool[] solutionTest = new bool[15];
 
     //Logging
     static int moduleIdCounter = 1;
@@ -84,7 +85,17 @@ public class cruelCountdownScript : MonoBehaviour
     {
         GenerateLargeNumbers();
         GenerateNumbers();
-        GenerateTarget();
+        while ((target < 100 || target > 1000))
+        {
+            if (!(solutionTest.Contains(false))) //this avoids infinite loops
+            {
+                GenerateLargeNumbers();
+                GenerateNumbers();
+                for (int i = 0; i < 15; i++) solutionTest[i] = false;
+            }
+            GenerateTarget();
+            solutionTest[chosenEquation] = true; //mark the equation as used
+        }
         Logging();
     }
 
@@ -134,7 +145,6 @@ public class cruelCountdownScript : MonoBehaviour
         {
             numbers[i].position = i;
         }
-        Debug.LogFormat("[Cruel Countdown #{0}] Your numbers are {1}, {2}, {3}, {4}, {5} & {6}.", moduleId, selectedNumbers[0], selectedNumbers[1], selectedNumbers[2], selectedNumbers[3], selectedNumbers[4], selectedNumbers[5]);
     }
 
     void GenerateTarget()
@@ -212,16 +222,12 @@ public class cruelCountdownScript : MonoBehaviour
         {
             target = ((selectedNumbers[1] - selectedNumbers[4]) + (selectedNumbers[0] - selectedNumbers[2])) * selectedNumbers[5];
         }
-
-        if(target > 1000 || target < 100)
-        {
-            GenerateTarget();
-        }
     }
 
     void Logging()
     {
         targetText.text = target.ToString();
+        Debug.LogFormat("[Cruel Countdown #{0}] Your numbers are {1}, {2}, {3}, {4}, {5} & {6}.", moduleId, selectedNumbers[0], selectedNumbers[1], selectedNumbers[2], selectedNumbers[3], selectedNumbers[4], selectedNumbers[5]);
         Debug.LogFormat("[Cruel Countdown #{0}] Your target is {1}.", moduleId, target);
         if(chosenEquation == 0)
         {
