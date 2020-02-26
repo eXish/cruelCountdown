@@ -83,6 +83,7 @@ public class cruelCountdownScript : MonoBehaviour
 
     void Start()
     {
+        for (int i = 0; i < 15; i++) solutionTest[i] = false;
         GenerateLargeNumbers();
         GenerateNumbers();
         while ((target < 100 || target > 1000))
