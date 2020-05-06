@@ -13,7 +13,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   id: cruelCountdown
   title: Cruel Countdown
-  description: 'Cruel Countdown 1.2
+  description: 'Cruel Countdown 1.21
 
     On the TV show they do the calculation in 30 seconds too...
 
@@ -25,6 +25,6 @@ MonoBehaviour:
 
 
     Manual available here: https://ktane.timwi.de/HTML/Cruel%20Countdown.html'
-  version: 1.2
+  version: 1.21
   outputFolder: build
   previewImage: {fileID: 2800000, guid: 8cbb4c18d47804801b73cc681490061c, type: 3}
