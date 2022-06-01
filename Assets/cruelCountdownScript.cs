@@ -481,6 +481,7 @@ public class cruelCountdownScript : MonoBehaviour
         operatorAdded = false;
         selectedOperation = "";
         boardFirst = 0;
+        mostRecentSolve = 0;
         foreach(ClickableNumbers number in numbers)
         {
             number.numberText.color = textColours[0];
