@@ -314,6 +314,8 @@ public class cruelCountdownScript : MonoBehaviour
         operatorAdded = false;
         selectedOperation = "";
         boardFirst = 0;
+        possibleSolutionsAvailable = 0;
+        possibleSolutions = new List<string>();
         foreach(ClickableNumbers number in numbers)
         {
             number.numberText.color = textColours[0];
