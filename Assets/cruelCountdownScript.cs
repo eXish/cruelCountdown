@@ -23,6 +23,7 @@ public class cruelCountdownScript : MonoBehaviour
     private int[] selectedNumbers = new int[6];
     private List<int> selectedLarge = new List<int>();
     private List<string> possibleSolutions = new List<string>();
+    private List<string> validSolutions = new List<string>();
 
     public TextMesh targetText;
     private int target = 1; //just in case, not 0 because it would auto-solve
@@ -39,7 +40,6 @@ public class cruelCountdownScript : MonoBehaviour
     private int equationsDone = 0;
     private int boardFirst = 0;
     private int mostRecentSolve = 0;
-    private int possibleSolutionsAvailable = 0;
 
     //Logging
     static int moduleIdCounter = 1;
@@ -89,11 +89,12 @@ public class cruelCountdownScript : MonoBehaviour
             GenerateLargeNumbers();
             GenerateNumbers();
             Main();
+            CheckForIntegrity();
         }
-        while (possibleSolutionsAvailable == 0);
+        while (validSolutions.Count() == 0);
         Debug.LogFormat("[Cruel Countdown #{0}] Your numbers are {1}, {2}, {3}, {4}, {5} & {6}.", moduleId, selectedNumbers[0], selectedNumbers[1], selectedNumbers[2], selectedNumbers[3], selectedNumbers[4], selectedNumbers[5]);
         Debug.LogFormat("[Cruel Countdown #{0}] Your target is {1}.", moduleId, target);
-        Debug.LogFormat("[Cruel Countdown #{0}] List of possible solutions: {1}.", moduleId, string.Join(" || ", possibleSolutions.ToArray()));
+        Debug.LogFormat("[Cruel Countdown #{0}] List of possible solutions: {1}.", moduleId, string.Join(" || ", validSolutions.ToArray()));
         targetText.text = target.ToString();
     }
 
@@ -314,8 +315,8 @@ public class cruelCountdownScript : MonoBehaviour
         operatorAdded = false;
         selectedOperation = "";
         boardFirst = 0;
-        possibleSolutionsAvailable = 0;
         possibleSolutions = new List<string>();
+        validSolutions = new List<string>();
         foreach(ClickableNumbers number in numbers)
         {
             number.numberText.color = textColours[0];
@@ -324,6 +325,68 @@ public class cruelCountdownScript : MonoBehaviour
         {
             op.GetComponentInChildren<TextMesh>().color = textColours[0];
         }
+    }
+    
+    void CheckForIntegrity()
+    {
+        if (possibleSolutions.Count() != 0)
+        {
+            possibleSolutions = possibleSolutions.Distinct().OrderBy(i => Guid.NewGuid()).ToList();
+            for (int x = 0; x < possibleSolutions.Count(); x++)
+            {
+                string Calculation = possibleSolutions[x].Replace("(", string.Empty).Replace(")", string.Empty);
+                List<int> Numbers = new List<int>();
+                List<string> Operators = new List<string>();
+                string NumericalValue = "";
+                for (int y = 0; y < Calculation.Length; y++)
+                {
+                    if (new[]{"+","-","*","/"}.Contains(Calculation[y].ToString()))
+                    {
+                        Operators.Add(Calculation[y].ToString());
+                        Numbers.Add(Int32.Parse(NumericalValue));
+                        NumericalValue = "";
+                    }
+                    
+                    else
+                    {
+                        NumericalValue += Calculation[y].ToString();
+                    }
+                }
+                Numbers.Add(Int32.Parse(NumericalValue));
+                int TempValue = Numbers[0];
+                for (int z = 0; z < Operators.Count(); z++)
+                {
+                    switch(Operators[z])
+                    {
+                        case "+":
+                            TempValue = TempValue + Numbers[z+1];
+                            break;
+                        case "-":
+                            TempValue = TempValue - Numbers[z+1];
+                            break;
+                        case "*":
+                            TempValue = TempValue * Numbers[z+1];
+                            break;
+                        case "/":
+                            TempValue = TempValue / Numbers[z+1];
+                            break;
+                    }
+                    if (TempValue > 9999)
+                    {
+                        break;
+                    }
+                }
+                if (TempValue == target)
+                {
+                    validSolutions.Add(possibleSolutions[x]);
+                }
+                if (validSolutions.Count() == 10)
+                {
+                    return;
+                }
+            }
+        }
+        possibleSolutions = new List<string>();
     }
     
     //THE SOLVER
@@ -433,7 +496,6 @@ public class cruelCountdownScript : MonoBehaviour
         Equation = Equation.Substring(1);
         Equation = Equation.Remove(Equation.Length - 1);
         possibleSolutions.Add(Equation);
-        possibleSolutionsAvailable++;
     }
 
     private int Evaluate(IEnumerable<IExpression> stack)
