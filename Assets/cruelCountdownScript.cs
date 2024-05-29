@@ -22,10 +22,11 @@ public class cruelCountdownScript : MonoBehaviour
 
     private int[] selectedNumbers = new int[6];
     private List<int> selectedLarge = new List<int>();
+    private List<string> possibleSolutions = new List<string>();
+    private List<string> validSolutions = new List<string>();
 
     public TextMesh targetText;
     private int target = 1; //just in case, not 0 because it would auto-solve
-    private int chosenEquation = 0;
 
     private ClickableNumbers firstPress;
     private ClickableNumbers secondPress;
@@ -39,7 +40,6 @@ public class cruelCountdownScript : MonoBehaviour
     private int equationsDone = 0;
     private int boardFirst = 0;
     private int mostRecentSolve = 0;
-    private int[] solutionTest = new int[15] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 };
 
     //Logging
     static int moduleIdCounter = 1;
@@ -83,31 +83,19 @@ public class cruelCountdownScript : MonoBehaviour
 
     void Start()
     {
-        GenerateLargeNumbers();
-        GenerateNumbers();
-        target = 1;
-        while ((target < 100 || target > 999))
+        do
         {
-            if ((solutionTest.Count() < 3)) //this avoids infinite loops, or just bad situations
-            {
-                GenerateLargeNumbers();
-                GenerateNumbers();
-                Debug.LogFormat("<Cruel Countdown #{0}> Numbers have been regenerated.", moduleId);
-                solutionTest = new int[15] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14};
-                Debug.LogFormat("<Cruel Countdown #{0}> solutionTest reinstantiated.", moduleId);
-            }
-            int chosenEqIndex = UnityEngine.Random.Range(0, solutionTest.Count());
-            GenerateTarget(solutionTest[chosenEqIndex]);
-            Debug.LogFormat("<Cruel Countdown #{0}> chosenEqIndex = {1}, solutionTest[chosenEqIndex] = {2}, target = {3}", moduleId,chosenEqIndex, solutionTest[chosenEqIndex], target);
-            solutionTest = solutionTest.Where(x => x != solutionTest[chosenEqIndex]).ToArray(); //remove the used equation
-            if (target < 100 || target > 999)
-            {
-                string[] outArray2 = new string[solutionTest.Count()];
-                for (int i = 0; i < solutionTest.Count(); i++) outArray2[i] = solutionTest[i].ToString();
-                Debug.LogFormat("<Cruel Countdown #{0}> solutionTest = {1}", moduleId, string.Join(", ", outArray2));
-            }
+            target = UnityEngine.Random.Range(100,1000);
+            GenerateLargeNumbers();
+            GenerateNumbers();
+            Main();
+            CheckForIntegrity();
         }
-        Logging();
+        while (validSolutions.Count() == 0);
+        Debug.LogFormat("[Cruel Countdown #{0}] Your numbers are {1}, {2}, {3}, {4}, {5} & {6}.", moduleId, selectedNumbers[0], selectedNumbers[1], selectedNumbers[2], selectedNumbers[3], selectedNumbers[4], selectedNumbers[5]);
+        Debug.LogFormat("[Cruel Countdown #{0}] Your target is {1}.", moduleId, target);
+        Debug.LogFormat("[Cruel Countdown #{0}] List of possible solutions: {1}.", moduleId, string.Join(" || ", validSolutions.ToArray()));
+        targetText.text = target.ToString();
     }
 
     void GenerateLargeNumbers()
@@ -156,161 +144,6 @@ public class cruelCountdownScript : MonoBehaviour
         for(int i = 0; i <= 5; i++)
         {
             numbers[i].position = i;
-        }
-    }
-
-    void GenerateTarget(int sendEquation)
-    {
-        chosenEquation = sendEquation;
-        if(chosenEquation == 0)
-        {
-            target = (selectedNumbers[5] * selectedNumbers[1]) + (selectedNumbers[0] - selectedNumbers[4]) + (selectedNumbers[2] - selectedNumbers[3]);
-        }
-        else if(chosenEquation == 1)
-        {
-            target = (selectedNumbers[0] - selectedNumbers[1] + selectedNumbers[5]);
-            if(selectedNumbers[2] > selectedNumbers[3])
-            {
-                target *= (selectedNumbers[2] - selectedNumbers[3]);
-            }
-            else if(selectedNumbers[3] > selectedNumbers[2])
-            {
-                target *= (selectedNumbers[3] - selectedNumbers[2]);
-            }
-            else
-            {
-                target += (selectedNumbers[3] + selectedNumbers[2]);
-            }
-        }
-        else if(chosenEquation == 2)
-        {
-            target = ((selectedNumbers[0] + selectedNumbers[4] + selectedNumbers[2]) - selectedNumbers[1]) + (selectedNumbers[3] * selectedNumbers[5]);
-        }
-        else if(chosenEquation == 3)
-        {
-            target = (selectedNumbers[5] * selectedNumbers[1]) + (selectedNumbers[4] * selectedNumbers[3]) - (selectedNumbers[0] + selectedNumbers[2]);
-        }
-        else if(chosenEquation == 4)
-        {
-            target = ((selectedNumbers[1] - selectedNumbers[3] - selectedNumbers[4]) * selectedNumbers[5]) + selectedNumbers[0] - selectedNumbers[2];
-        }
-        else if (chosenEquation == 5)
-        {
-            target = (selectedNumbers[1] + selectedNumbers[0]) - (selectedNumbers[2] + selectedNumbers[3]) + (selectedNumbers[4] * selectedNumbers[5]);
-        }
-        else if (chosenEquation == 6)
-        {
-            target = (selectedNumbers[0] * selectedNumbers[4]) + (selectedNumbers[1] - selectedNumbers[5]) - (selectedNumbers[2] + selectedNumbers[3]);
-        }
-        else if (chosenEquation == 7)
-        {
-            target = ((selectedNumbers[5] + selectedNumbers[4]) * (selectedNumbers[2] - selectedNumbers[3]) + selectedNumbers[0] - selectedNumbers[1]);
-        }
-        else if (chosenEquation == 8)
-        {
-            target = ((selectedNumbers[2] * (selectedNumbers[4] + selectedNumbers[5])) - selectedNumbers[3]) + selectedNumbers[0];
-        }
-        else if (chosenEquation == 9)
-        {
-            target = ((selectedNumbers[1] + selectedNumbers[5] - selectedNumbers[2]) * selectedNumbers[0]) + selectedNumbers[4] - selectedNumbers[3];
-        }
-        else if (chosenEquation == 10)
-        {
-            target = (selectedNumbers[2] - selectedNumbers[3]) * (selectedNumbers[4] + selectedNumbers[5]);
-        }
-        else if (chosenEquation == 11)
-        {
-            target = (selectedNumbers[0] * selectedNumbers[5]) + selectedNumbers[4] + selectedNumbers[3];
-        }
-        else if (chosenEquation == 12)
-        {
-            target = (selectedNumbers[5] * selectedNumbers[4] * selectedNumbers[3]) - (selectedNumbers[0] + selectedNumbers[2]);
-        }
-        else if (chosenEquation == 13)
-        {
-            target = ((selectedNumbers[1] + selectedNumbers[5]) * selectedNumbers[4]) - selectedNumbers[3];
-        }
-        else if (chosenEquation == 14)
-        {
-            target = ((selectedNumbers[1] - selectedNumbers[4]) + (selectedNumbers[0] - selectedNumbers[2])) * selectedNumbers[5];
-        }
-    }
-
-    void Logging()
-    {
-        targetText.text = target.ToString();
-        Debug.LogFormat("[Cruel Countdown #{0}] Your numbers are {1}, {2}, {3}, {4}, {5} & {6}.", moduleId, selectedNumbers[0], selectedNumbers[1], selectedNumbers[2], selectedNumbers[3], selectedNumbers[4], selectedNumbers[5]);
-        Debug.LogFormat("[Cruel Countdown #{0}] Your target is {1}.", moduleId, target);
-        if(chosenEquation == 0)
-        {
-            Debug.LogFormat("[Cruel Countdown #{0}] One possible solution: ({1} × {2}) + ({3} - {4}) + ({5} - {6}).", moduleId, selectedNumbers[5], selectedNumbers[1], selectedNumbers[0], selectedNumbers[4], selectedNumbers[2], selectedNumbers[3]);
-        }
-        else if(chosenEquation == 1)
-        {
-            if(selectedNumbers[2] > selectedNumbers[3])
-            {
-                Debug.LogFormat("[Cruel Countdown #{0}] One possible solution: ({1} - {2} + {3}) × ({4} - {5}).", moduleId, selectedNumbers[0], selectedNumbers[1], selectedNumbers[5], selectedNumbers[2], selectedNumbers[3]);
-            }
-            else if(selectedNumbers[3] > selectedNumbers[2])
-            {
-                Debug.LogFormat("[Cruel Countdown #{0}] One possible solution: ({1} - {2} + {3}) × ({4} - {5}).", moduleId, selectedNumbers[0], selectedNumbers[1], selectedNumbers[5], selectedNumbers[3], selectedNumbers[2]);
-            }
-            else
-            {
-                Debug.LogFormat("[Cruel Countdown #{0}] One possible solution: ({1} - {2} + {3}) × ({4} + {5}).", moduleId, selectedNumbers[0], selectedNumbers[1], selectedNumbers[5], selectedNumbers[3], selectedNumbers[2]);
-            }
-        }
-        else if(chosenEquation == 2)
-        {
-            Debug.LogFormat("[Cruel Countdown #{0}] One possible solution: (({1} + {2} + {3}) - {4}) + ({5} × {6}).", moduleId, selectedNumbers[0], selectedNumbers[4], selectedNumbers[2], selectedNumbers[1], selectedNumbers[3], selectedNumbers[5]);
-        }
-        else if(chosenEquation == 3)
-        {
-            Debug.LogFormat("[Cruel Countdown #{0}] One possible solution: ({1} x {2}) + ({3} × {4}) - ({5} + {6}).", moduleId, selectedNumbers[5], selectedNumbers[1], selectedNumbers[4], selectedNumbers[3], selectedNumbers[0], selectedNumbers[2]);
-        }
-        else if(chosenEquation == 4)
-        {
-            Debug.LogFormat("[Cruel Countdown #{0}] One possible solution: (({1} - {2} - {3}) × {4}) + {5} - {6}.", moduleId, selectedNumbers[1], selectedNumbers[3], selectedNumbers[4], selectedNumbers[5], selectedNumbers[0], selectedNumbers[2]);
-        }
-        else if(chosenEquation == 5)
-        {
-            Debug.LogFormat("[Cruel Countdown #{0}] One possible solution: ({1} + {2}) - ({3} + {4}) + ({5} × {6}).", moduleId, selectedNumbers[1], selectedNumbers[0], selectedNumbers[2], selectedNumbers[3], selectedNumbers[4], selectedNumbers[5]);
-        }
-        else if(chosenEquation == 6)
-        {
-            Debug.LogFormat("[Cruel Countdown #{0}] One possible solution: ({1} × {2}) + {3} - {4} - ({5} + {6}).", moduleId, selectedNumbers[0], selectedNumbers[4], selectedNumbers[1], selectedNumbers[5], selectedNumbers[2], selectedNumbers[3]);
-        }
-        else if(chosenEquation == 7)
-        {
-            Debug.LogFormat("[Cruel Countdown #{0}] One possible solution: ({1} + {2}) × ({3} - {4}) + {5} - {6}.", moduleId, selectedNumbers[5], selectedNumbers[4], selectedNumbers[2], selectedNumbers[3], selectedNumbers[0], selectedNumbers[1]);
-        }
-        else if(chosenEquation == 8)
-        {
-            Debug.LogFormat("[Cruel Countdown #{0}] One possible solution: (({1} × ({2} + {3})) - {4}) + {5}.", moduleId, selectedNumbers[2], selectedNumbers[4], selectedNumbers[5], selectedNumbers[3], selectedNumbers[0]);
-        }
-        else if(chosenEquation == 9)
-        {
-            Debug.LogFormat("[Cruel Countdown #{0}] One possible solution: (({1} + {2} - {3}) × {4}) + {5} - {6}.", moduleId, selectedNumbers[1], selectedNumbers[5], selectedNumbers[2], selectedNumbers[0], selectedNumbers[4], selectedNumbers[3]);
-        }
-        else if(chosenEquation == 10)
-        {
-            Debug.LogFormat("[Cruel Countdown #{0}] One possible solution: ({1} - {2}) × ({3} + {4}).", moduleId, selectedNumbers[2], selectedNumbers[3], selectedNumbers[4], selectedNumbers[5]);
-        }
-        else if(chosenEquation == 11)
-        {
-            Debug.LogFormat("[Cruel Countdown #{0}] One possible solution: ({1} × {2}) + {3} + {4}.", moduleId, selectedNumbers[0], selectedNumbers[5], selectedNumbers[4], selectedNumbers[3]);
-        }
-        else if(chosenEquation == 12)
-        {
-            Debug.LogFormat("[Cruel Countdown #{0}] One possible solution: ({1} × {2} × {3}) - ({4} + {5}).", moduleId, selectedNumbers[5], selectedNumbers[4], selectedNumbers[3], selectedNumbers[0], selectedNumbers[2]);
-        }
-        else if(chosenEquation == 13)
-        {
-            Debug.LogFormat("[Cruel Countdown #{0}] One possible solution: (({1} + {2}) × {3}) - {4}.", moduleId, selectedNumbers[1], selectedNumbers[5], selectedNumbers[4], selectedNumbers[3]);
-        }
-        else if(chosenEquation == 14)
-        {
-            Debug.LogFormat("[Cruel Countdown #{0}] One possible solution: (({1} - {2}) + ({3} - {4})) × {5}.", moduleId, selectedNumbers[1], selectedNumbers[4], selectedNumbers[0], selectedNumbers[2], selectedNumbers[5]);
         }
     }
 
@@ -409,7 +242,7 @@ public class cruelCountdownScript : MonoBehaviour
             // Note from K.S.: Don't attempt to divide by zero, TP will catch the DivideByZeroException and autosolve us
             if(secondPress.chosenNumber == 0)
             {
-                Debug.LogFormat("[Countdown #{0}] Strike! You can't divide by zero.", moduleId);
+                Debug.LogFormat("[Cruel Countdown #{0}] Strike! You can't divide by zero.", moduleId);
                 GetComponent<KMBombModule>().HandleStrike();
                 Reset();
                 return;
@@ -482,6 +315,8 @@ public class cruelCountdownScript : MonoBehaviour
         operatorAdded = false;
         selectedOperation = "";
         boardFirst = 0;
+        possibleSolutions = new List<string>();
+        validSolutions = new List<string>();
         foreach(ClickableNumbers number in numbers)
         {
             number.numberText.color = textColours[0];
@@ -491,6 +326,198 @@ public class cruelCountdownScript : MonoBehaviour
             op.GetComponentInChildren<TextMesh>().color = textColours[0];
         }
     }
+    
+    void CheckForIntegrity()
+    {
+        if (possibleSolutions.Count() != 0)
+        {
+            possibleSolutions = possibleSolutions.Distinct().OrderBy(i => Guid.NewGuid()).ToList();
+            for (int x = 0; x < possibleSolutions.Count(); x++)
+            {
+                string Calculation = possibleSolutions[x].Replace("(", string.Empty).Replace(")", string.Empty);
+                List<int> Numbers = new List<int>();
+                List<string> Operators = new List<string>();
+                string NumericalValue = "";
+                for (int y = 0; y < Calculation.Length; y++)
+                {
+                    if (new[]{"+","-","*","/"}.Contains(Calculation[y].ToString()))
+                    {
+                        Operators.Add(Calculation[y].ToString());
+                        Numbers.Add(Int32.Parse(NumericalValue));
+                        NumericalValue = "";
+                    }
+                    
+                    else
+                    {
+                        NumericalValue += Calculation[y].ToString();
+                    }
+                }
+                Numbers.Add(Int32.Parse(NumericalValue));
+                int TempValue = Numbers[0];
+                for (int z = 0; z < Operators.Count(); z++)
+                {
+                    switch(Operators[z])
+                    {
+                        case "+":
+                            TempValue = TempValue + Numbers[z+1];
+                            break;
+                        case "-":
+                            TempValue = TempValue - Numbers[z+1];
+                            break;
+                        case "*":
+                            TempValue = TempValue * Numbers[z+1];
+                            break;
+                        case "/":
+                            TempValue = TempValue / Numbers[z+1];
+                            break;
+                    }
+                    if (TempValue > 9999)
+                    {
+                        break;
+                    }
+                }
+                if (TempValue == target)
+                {
+                    validSolutions.Add(possibleSolutions[x]);
+                }
+                if (validSolutions.Count() == 10)
+                {
+                    return;
+                }
+            }
+        }
+        possibleSolutions = new List<string>();
+    }
+    
+    //THE SOLVER
+    internal interface IExpression { }; 
+    
+    class Op : IExpression
+    {
+        public Func<int, int, int> Func { get; private set; }
+        public string Name { get; private set; }
+
+        public Op(string name, Func<int, int, int> op)
+        {
+            Func = op;
+            Name = name;
+        }
+
+        public override string ToString()
+        {
+            return Name;
+        }
+    }
+
+    class Num : IExpression
+    {
+        public int Val { get; set; }
+
+        public Num(int val) { Val = val; }
+
+        public override string ToString()
+        {
+            return Val.ToString();
+        }
+    }
+
+    private readonly Op[] Ops =
+    {
+        new Op("+", (a, b) => a + b),
+        new Op("-", (a, b) => a - b),
+        new Op("*", (a, b) => a * b),
+        new Op("/", (a, b) =>
+        {
+            if (a%b != 0)
+            {
+                throw new ArgumentException();
+            }
+            return a/b;
+        })
+    };
+
+    void Main()
+    {
+        var targetNumber = target;
+
+        var stack = new Stack<IExpression>();
+
+        var numbers = selectedNumbers.ToList();
+
+        NextGen(numbers, stack, targetNumber);
+    }
+
+    private void NextGen(List<int> numbers, Stack<IExpression> stack, int target)
+    {
+        for (int i = 0; i < numbers.Count; i++)
+        {
+            var n = numbers[i];
+            var nextList = new List<int>(numbers);
+            nextList.RemoveAt(i);
+
+            stack.Push(new Num(n));
+
+            try
+            {
+                var val = Evaluate(stack);
+                if (val == target)
+                {
+                    Print(stack);
+                }
+
+                if (val < 0) throw new Exception();
+
+                foreach (var op in Ops)
+                {
+                    stack.Push(op);
+                    NextGen(nextList, stack, target);
+                    stack.Pop();
+                }
+            }
+            catch
+            { }
+
+            stack.Pop();
+        }
+    }
+
+    private void Print(IEnumerable<IExpression> stack)
+    {
+        string Equation = "";
+        bool FirstNumberPassed = false;
+        foreach (var expression in stack.Reverse())
+        {
+            int Out;
+            Equation = Int32.TryParse(expression.ToString(), out Out) == true && FirstNumberPassed ? Equation.Insert(0, "(") : Equation;
+            Equation = Equation + expression.ToString();
+            Equation = Int32.TryParse(expression.ToString(), out Out) == true && FirstNumberPassed ? Equation + ")" : Equation;
+            FirstNumberPassed = true;
+        }
+        Equation = Equation.Substring(1);
+        Equation = Equation.Remove(Equation.Length - 1);
+        possibleSolutions.Add(Equation);
+    }
+
+    private int Evaluate(IEnumerable<IExpression> stack)
+    {
+        int acc = 0;
+        Op currentOp = null;
+        foreach (var expression in stack.Reverse())
+        {
+            if (expression is Num)
+            {
+                int val = (expression as Num).Val;
+
+                acc = currentOp != null ? currentOp.Func(acc, val) : val;
+            }
+            else
+            {
+                currentOp = expression as Op;
+            }
+        }
+        return acc;
+    }
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
     // Twitch Plays implementation handled by Kaito Sinclaire (K_S_)
@@ -614,7 +641,7 @@ public class cruelCountdownScript : MonoBehaviour
     {
         GetComponent<KMBombModule>().HandlePass();
         moduleSolved = true;
-        Debug.LogFormat("[Countdown #{0}] Twitch Plays requested a solve.", moduleId);
+        Debug.LogFormat("[Cruel Countdown #{0}] Twitch Plays requested a solve.", moduleId);
         if (clockOn)
         {
             // Act like we've just been solved the normal way
