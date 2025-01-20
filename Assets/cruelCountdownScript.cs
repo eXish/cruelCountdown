@@ -101,9 +101,9 @@ public class cruelCountdownScript : MonoBehaviour
     void GenerateLargeNumbers()
     {
         largeNumbers[0] = UnityEngine.Random.Range(81, 100);
-        largeNumbers[1] = UnityEngine.Random.Range(61, 80);
-        largeNumbers[2] = UnityEngine.Random.Range(41, 60);
-        largeNumbers[3] = UnityEngine.Random.Range(21, 40);
+        largeNumbers[1] = UnityEngine.Random.Range(61, 81);
+        largeNumbers[2] = UnityEngine.Random.Range(41, 61);
+        largeNumbers[3] = UnityEngine.Random.Range(21, 41);
     }
     void GenerateNumbers()
     {
